@@ -36,10 +36,16 @@ def build_eval_pure(jaxpr: jax.core.ClosedJaxpr) -> ast.Function:
         # if eq.primitive.name == "add":
         #    print(f"{get_shape(eq.invars[0].aval)} | {get_shape(eq.invars[1].aval)}")
         name = "lax::" + eq.primitive.name
-        args = [ ast.VarExpr(name=f'static_cast<FloatT>({e})') if isinstance(e, jax.core.Literal) else ast.VarExpr(name=str(e)) for e in eq.invars]
+        args = [
+            ast.VarExpr(name=f"static_cast<FloatT>({e})")
+            if isinstance(e, jax.core.Literal)
+            else ast.VarExpr(name=str(e))
+            for e in eq.invars
+        ]
         if eq.primitive.name == "dot_general":
-            # print(eq.params)
-            pass
+            dims = eq.params["dimension_numbers"][0]
+            a, b = dims
+            name = f"lax::template dot_general<{a[0]}, {b[0]}>"
         if eq.primitive.name == "transpose":
             shape = get_shape(eq.params["permutation"])
             name = f"lax::template transpose<{shape}>"
@@ -209,7 +215,7 @@ def model(x):
 
     m = hk.Sequential(
         [
-            #jaxtree.DTreeModule(in_shape=(2,), out_shape=(1,), depth=1, batch=1024)
+            # jaxtree.DTreeModule(in_shape=(2,), out_shape=(1,), depth=1, batch=1024)
             hk.Linear(128),
             jax.nn.gelu,
             hk.Linear(64),
@@ -244,9 +250,9 @@ def main():
 
     import timeit
 
-    #t = timeit.Timer(lambda: jitf(x))
-    #print(t.timeit(100000)/100000 * (1000*1000*1000))
-    #return
+    # t = timeit.Timer(lambda: jitf(x))
+    # print(t.timeit(100000)/100000 * (1000*1000*1000))
+    # return
 
     jaxpr = jax.make_jaxpr(partial(model_t.apply, params))(x)
     # to_cpp(jaxpr, "f")

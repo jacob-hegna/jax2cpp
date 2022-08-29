@@ -77,14 +77,14 @@ template <> struct Lax<Backend::kEigen> {
   }
   template <class T> static auto exp(const T &mat) { return mat.exp(); }
   template <class T> static auto tanh(const T &lhs) { return lhs.tanh(); }
-  template <class T, class S>
+  template <int A, int B, class T, class S>
   static auto dot_general(const T &lhs, const S &rhs) {
     Eigen::array<Eigen::IndexPair<int>, 1> product_dims = {
-        Eigen::IndexPair<int>(1, 0)};
+        Eigen::IndexPair<int>(A, B)};
 
     return lhs.contract(rhs, product_dims);
   }
-  template <class T, class S> static auto pow(const T &mat, S exp) {
+  template <class T, class S> static auto pow(const T &mat, const S &exp) {
     return mat.pow(exp);
   }
   template <class ReshapeT, class BroadcastT, class ShuffleT, class T>
@@ -106,7 +106,7 @@ template <> struct Lax<Backend::kEigen> {
 #include <blaze/blaze.h>
 
 template <> struct Lax<Backend::kBlaze> {
-  template <class T> T abs(const T &mat) { return blaze::abs(mat); }
+  template <class T> T abs(T mat) { return blaze::abs(mat); }
 };
 #endif
 
